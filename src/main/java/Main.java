@@ -1,5 +1,6 @@
 import accounts.AccountService;
 import accounts.UserProfile;
+import dbService.DBService;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -11,14 +12,32 @@ import servlets.SignInServlet;
 import servlets.SignUpServlet;
 import servlets.UserServlet;
 
+import java.sql.Driver;
+import java.sql.SQLException;
+
 public class Main {
 
+    protected static AccountService accountService;
+
     public static void main (String[] args) throws Exception {
+        try {
+            initServices();
+            initServlets();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-        AccountService accountService = new AccountService();
-        accountService.addNewUser(new UserProfile("admin"));
-        accountService.addNewUser(new UserProfile("test"));
+    protected static void initServices() throws SQLException {
+        DBService dbService = new DBService();
 
+        accountService = new AccountService(dbService);
+
+//        accountService.addNewUser(new UserProfile("admin"));
+//        accountService.addNewUser(new UserProfile("test"));
+    }
+
+    protected static void initServlets() throws Exception {
         ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
 
         contextHandler.addServlet(new ServletHolder(new UserServlet(accountService)), "/api/users");
