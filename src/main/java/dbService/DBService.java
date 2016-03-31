@@ -1,6 +1,10 @@
 package dbService;
 
-import org.h2.jdbcx.JdbcDataSource;
+import dbService.dataSets.UsersDataSet;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.service.ServiceRegistry;
 
 import java.sql.*;
 
@@ -11,30 +15,15 @@ public class DBService {
 
     protected final Connection connection;
 
+    protected final SessionFactory sessionFactory;
+
     public DBService() {
-        this.connection = getH2Connection();
+        connection = getH2Connection();
+        sessionFactory = createSessionFactory(getHibernateConfiguration());
     }
 
-    public void test() {
-        try {
-            Statement statement = connection.createStatement();
-            statement.execute("DROP TABLE IF EXISTS my_table");
-            statement.execute("CREATE TABLE my_table (id int PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255))");
-            statement.execute("INSERT INTO my_table (name) VALUES ('qwe'), ('qw'), ('asd')");
-            statement.close();
-
-            PreparedStatement pStmt = connection.prepareStatement("SELECT * FROM my_table WHERE name LIKE ?");
-            pStmt.setString(1, "qa%");
-            ResultSet result = pStmt.executeQuery();
-
-            while (result.next()) {
-                System.out.print("id: " + result.getInt("id"));
-                System.out.println(" name: " + result.getString(2));
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    public SessionFactory getSessionFactory() {
+        return sessionFactory;
     }
 
     public void printConnectInfo() {
@@ -59,5 +48,24 @@ public class DBService {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public Configuration getHibernateConfiguration() {
+        Configuration configuration = new Configuration();
+        configuration.addAnnotatedClass(UsersDataSet.class);
+
+        configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
+        configuration.setProperty("hibernate.connection.driver_class", "org.h2.Driver");
+        configuration.setProperty("hibernate.connection.url", "jdbc:h2:./h2hibernate");
+        configuration.setProperty("hibernate.show_sql", "true");
+        configuration.setProperty("hibernate.hbm2ddl.auto", "create");
+        return configuration;
+    }
+
+    protected static SessionFactory createSessionFactory(Configuration configuration) {
+        StandardServiceRegistryBuilder builder = new StandardServiceRegistryBuilder();
+        builder.applySettings(configuration.getProperties());
+        ServiceRegistry registry = builder.build();
+        return configuration.buildSessionFactory(registry);
     }
 }

@@ -31,10 +31,12 @@ public class Main {
     protected static void initServices() throws SQLException {
         DBService dbService = new DBService();
 
-        accountService = new AccountService(dbService);
+        accountService = new AccountService(dbService.getSessionFactory());
 
-//        accountService.addNewUser(new UserProfile("admin"));
-//        accountService.addNewUser(new UserProfile("test"));
+        accountService.addNewUser(new UserProfile("admin"));
+        accountService.addNewUser(new UserProfile("test"));
+
+        System.out.println(accountService.getUserByLogin("test"));
     }
 
     protected static void initServlets() throws Exception {
